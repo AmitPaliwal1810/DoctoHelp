@@ -1,24 +1,25 @@
 import {View, Image, Text, TouchableOpacity} from 'react-native';
 import tw from 'twrnc';
 import {color} from '..';
-import {useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const availableTiming = [
   {
     label: '1 PM - 2 PM',
-    value: '1-2',
+    value: '1pm-2pm',
   },
   {
     label: '3 PM - 4 PM',
-    value: '3-4',
+    value: '3pm-4pm',
   },
   {
     label: '5 PM - 6 PM',
-    value: '5-6',
+    value: '5pm-6pm',
   },
   {
     label: '8 PM - 9 PM',
-    value: '8-9',
+    value: '8pm-9pm',
   },
 ];
 
@@ -28,12 +29,56 @@ export const BookAppointmentScreen = ({route}: any) => {
   const [TodayBooking, setTodayBooking] = useState<string>('');
   const [TomorrowBooking, setTomorrowBooking] = useState<string>('');
 
-  const handleTodayBooking = (tab: string) => {
+  const [, setUserData] = useState(); // need to add state and set data
+
+  const handleSubmit = useCallback(async () => {
+    try {
+      const {response}: any = await fetch('http://localhost:8080/slot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          slot: TodayBooking ?? TomorrowBooking,
+        }),
+      });
+      // Need to add token
+      const data = await response.json();
+      console.log({data});
+    } catch (error) {
+      console.log(error);
+    }
+  }, [TodayBooking, TomorrowBooking]);
+
+  const getDoctorDetail = useCallback(async () => {
+    const token = await AsyncStorage.getItem('token');
+    try {
+      const {response}: any = await fetch('http://localhost:8080/doctor/id', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // Need to add token
+      const data = await response.json();
+      setUserData(data);
+      console.log({data});
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    getDoctorDetail();
+  }, [getDoctorDetail]);
+
+  const handleTodayBooking = useCallback(async (tab: string) => {
     setTodayBooking(tab);
-  };
-  const handleTomorrowBooking = (tab: string) => {
+  }, []);
+  const handleTomorrowBooking = useCallback(async (tab: string) => {
     setTomorrowBooking(tab);
-  };
+  }, []);
   return (
     <View
       style={[
@@ -45,6 +90,7 @@ export const BookAppointmentScreen = ({route}: any) => {
       <View
         style={[
           tw`h-78 w-full rounded-2 items-center justify-center gap-4`,
+          // eslint-disable-next-line react-native/no-inline-styles
           {
             backgroundColor: '#ceced8',
           },
@@ -81,10 +127,11 @@ export const BookAppointmentScreen = ({route}: any) => {
           ))}
         </View>
       </View>
-      <TouchableOpacity onPress={() => {}} style={tw`items-center`}>
+      <TouchableOpacity onPress={handleSubmit} style={tw`items-center`}>
         <View
           style={[
             tw`w-40 items-center p-4 rounded-2`,
+            // eslint-disable-next-line react-native/no-inline-styles
             {
               backgroundColor: '#9CA3B0',
             },
@@ -101,6 +148,7 @@ const TabButton = ({label, isSelected, onPress}: any) => {
     <TouchableOpacity
       style={[
         tw`w-24 h-8 bg-white items-center justify-center rounded-4 `,
+        // eslint-disable-next-line react-native/no-inline-styles
         {
           backgroundColor: isSelected ? '#9CA3B0' : '#DFDFDF',
         },

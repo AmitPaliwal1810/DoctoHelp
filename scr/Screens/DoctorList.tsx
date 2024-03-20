@@ -1,7 +1,8 @@
 import {View, Text, FlatList, Image, Pressable} from 'react-native';
 import tw from 'twrnc';
 import {color} from '..';
-import {useCallback} from 'react';
+import {useCallback, useEffect, useState} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const dummyDoctorList = [
   {
@@ -57,6 +58,31 @@ const dummyDoctorList = [
 export const DoctorList = ({route, navigation}: any) => {
   const {id, name} = route.params;
   console.log(id);
+
+  const [, setUserData] = useState(); // need to add state and set data
+
+  const getDoctorList = useCallback(async () => {
+    const token = await AsyncStorage.getItem('token');
+    try {
+      const {response}: any = await fetch('http://localhost:8080/doctor/id', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // Need to add token
+      const data = await response.json();
+      setUserData(data);
+      console.log({data});
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    getDoctorList();
+  }, [getDoctorList]);
 
   return (
     <View

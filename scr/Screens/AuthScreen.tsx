@@ -3,6 +3,7 @@ import {Image, ScrollView, TextInput, View} from 'react-native';
 import tw from 'twrnc';
 import {color} from '..';
 import {CustomeButton} from '../Components';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AuthScreen: FC<any> = ({navigation}) => {
   const [email, setEmail] = useState<string>('');
@@ -13,9 +14,50 @@ export const AuthScreen: FC<any> = ({navigation}) => {
 
   const [isLogInScreen, setIsLogInScreen] = useState<boolean>(true);
 
-  const handleLogIn = useCallback(() => {
+  const handleLogIn = useCallback(async () => {
+    try {
+      const {response}: any = await fetch('http://localhost:8080/v1/log-in', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+      // Need to add token
+      const data = await response.json();
+      await AsyncStorage.setItem('token', data.token);
+      console.log({data});
+    } catch (error) {
+      console.log(error);
+    }
     navigation.navigate('/Home');
-  }, [navigation]);
+  }, [email, navigation, password]);
+
+  const handleSignUp = useCallback(async () => {
+    try {
+      const {response}: any = await fetch('http://localhost:8080/v1/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+          name: name,
+          age: age,
+          address: address,
+        }),
+      });
+      const data = await response.json();
+      console.log({data});
+    } catch (error) {
+      console.log(error);
+      setIsLogInScreen(true);
+    }
+  }, [address, age, email, name, password]);
 
   const handleLogInScreenToggler = useCallback(
     () => setIsLogInScreen(prev => !prev),
@@ -81,7 +123,7 @@ export const AuthScreen: FC<any> = ({navigation}) => {
 
           <CustomeButton
             text={isLogInScreen ? 'LogIn' : 'SignUp'}
-            onClick={handleLogIn}
+            onClick={isLogInScreen ? handleLogIn : handleSignUp}
             style={[
               tw`h-12 w-full border-2 rounded-lg flex justify-center items-center`,
               {

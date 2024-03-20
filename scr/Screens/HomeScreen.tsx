@@ -2,7 +2,8 @@ import {FlatList, Text, View, Image, ScrollView, Pressable} from 'react-native';
 import tw from 'twrnc';
 import {color} from '..';
 import {TopNavigation} from '../Components';
-import {FC, useCallback} from 'react';
+import {FC, useCallback, useEffect, useState} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type ItemProps = {title: string; imageSrc: any};
 
@@ -53,6 +54,31 @@ const disease = [
 ];
 
 export const HomeScreen: FC<any> = ({navigation}) => {
+  const [, setUserData] = useState(); // need to add state and set data
+
+  const getDiseaseList = useCallback(async () => {
+    const token = await AsyncStorage.getItem('token');
+    try {
+      const {response}: any = await fetch('http://localhost:8080/data', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      // Need to add token
+      const data = await response.json();
+      setUserData(data);
+      console.log({data});
+    } catch (error) {
+      console.log(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    getDiseaseList();
+  }, [getDiseaseList]);
+
   return (
     <View
       style={[
@@ -77,6 +103,7 @@ export const HomeScreen: FC<any> = ({navigation}) => {
         <View
           style={[
             tw`w-full h-100 rounded-2 flex flex-1 justify-center mt-4 p-4 gap-4  `,
+            // eslint-disable-next-line react-native/no-inline-styles
             {
               backgroundColor: '#D9D9D9',
             },
@@ -101,6 +128,7 @@ const Item = ({title, imageSrc}: ItemProps) => {
     <View
       style={[
         tw`h-40 w-88 flex-1 flex-row bg-white px-2 mr-4 items-center rounded-md `,
+        // eslint-disable-next-line react-native/no-inline-styles
         {
           backgroundColor: '#CECED8',
         },
@@ -113,6 +141,7 @@ const Item = ({title, imageSrc}: ItemProps) => {
         alt="image"
         style={[
           tw`h-40 w-40`,
+          // eslint-disable-next-line react-native/no-inline-styles
           {
             resizeMode: 'contain',
           },
@@ -135,6 +164,7 @@ const DiseaseCategory = ({data, navigation}: any) => {
       <View
         style={[
           tw`w-full h-14 justify-center rounded-2 p-4 mb-4`,
+          // eslint-disable-next-line react-native/no-inline-styles
           {
             backgroundColor: '#9ba3ae',
           },
